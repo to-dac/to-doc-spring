@@ -30,6 +30,9 @@ public class ChatSession {
     @Column(length = 500)
     private String address;
 
+    @Column(length = 19)
+    private String pnu;
+
     @Column(name = "template_id")
     private Long templateId;
 
@@ -47,6 +50,10 @@ public class ChatSession {
 
     public void updateAddress(String address) {
         this.address = address;
+    }
+
+    public void updatePnu(String pnu) {
+        this.pnu = pnu;
     }
 
     public void updateTemplateId(Long templateId) {

@@ -48,6 +48,8 @@ public class ChatService {
                 .user(user)
                 .title(title)
                 .address(request.address())
+                .pnu(request.pnu())
+                .templateId(request.templateId())
                 .build();
 
         return ChatSessionResponse.from(chatSessionRepository.save(session));
