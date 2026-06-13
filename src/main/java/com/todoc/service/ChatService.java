@@ -61,6 +61,14 @@ public class ChatService {
                 .toList();
     }
 
+    @Transactional
+    public void deleteSession(Long sessionId) {
+        ChatSession session = chatSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("세션을 찾을 수 없습니다: id=" + sessionId));
+        chatMessageRepository.deleteBySessionId(sessionId);
+        chatSessionRepository.delete(session);
+    }
+
     public SseEmitter sendStreamingMessage(Long sessionId, SendChatMessageRequest request) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new NotFoundException("세션을 찾을 수 없습니다: id=" + sessionId));

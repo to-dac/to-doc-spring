@@ -44,4 +44,10 @@ public class ChatController {
             @RequestBody @Valid SendChatMessageRequest request) {
         return chatService.sendStreamingMessage(sessionId, request);
     }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteSession(@PathVariable Long sessionId) {
+        chatService.deleteSession(sessionId);
+    }
 }
