@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - minty
 
 jobs:
   build-and-deploy:
