@@ -39,6 +39,12 @@ public class ChatSession {
     @Column(name = "land_info", columnDefinition = "TEXT")
     private String landInfo;
 
+    @Column(name = "document_id", length = 100)
+    private String documentId;
+
+    @Column(name = "submission_id")
+    private Long submissionId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -65,5 +71,13 @@ public class ChatSession {
 
     public void updateLandInfo(String landInfo) {
         this.landInfo = landInfo;
+    }
+
+    public void updateDocumentId(String documentId) {
+        this.documentId = documentId;
+    }
+
+    public void updateSubmissionId(Long submissionId) {
+        this.submissionId = submissionId;
     }
 }

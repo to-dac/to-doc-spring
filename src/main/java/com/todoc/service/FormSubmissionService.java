@@ -1,7 +1,9 @@
 package com.todoc.service;
 
+import com.todoc.domain.ChatSession;
 import com.todoc.domain.FormAnswer;
 import com.todoc.domain.FormSubmission;
+import com.todoc.service.AiPermitClient;
 import com.todoc.dto.request.SubmitFormRequest;
 import com.todoc.dto.response.FormSubmissionResponse;
 import com.todoc.dto.response.FormSubmissionResponse.AnswerResponse;
@@ -56,6 +58,38 @@ public class FormSubmissionService {
                 .map(AnswerResponse::from)
                 .toList();
         return FormSubmissionResponse.from(submission, answerResponses);
+    }
+
+    @Transactional
+    public FormSubmission submitAiGenerated(Long templateId, Long userId, ChatSession session,
+            List<AiPermitClient.AnswerItem> answers) {
+        var template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new NotFoundException("템플릿을 찾을 수 없습니다: id=" + templateId));
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다: id=" + userId));
+
+        var submission = FormSubmission.builder()
+                .template(template)
+                .user(user)
+                .session(session)
+                .build();
+        submission = submissionRepository.save(submission);
+
+        final var savedSubmission = submission;
+        List<FormAnswer> formAnswers = answers.stream()
+                .map(item -> {
+                    var question = questionRepository.findById(item.question_id())
+                            .orElseThrow(() -> new NotFoundException("질문을 찾을 수 없습니다: id=" + item.question_id()));
+                    return FormAnswer.builder()
+                            .submission(savedSubmission)
+                            .question(question)
+                            .answerValue(item.answer_value())
+                            .build();
+                })
+                .toList();
+
+        answerRepository.saveAll(formAnswers);
+        return submission;
     }
 
     @Transactional(readOnly = true)

@@ -11,6 +11,7 @@ import com.todoc.dto.request.CreateChatSessionRequest;
 import com.todoc.dto.request.SendChatMessageRequest;
 import com.todoc.dto.response.ChatMessageResponse;
 import com.todoc.dto.response.ChatSessionResponse;
+import com.todoc.domain.FormSubmission;
 import com.todoc.dto.response.FormTemplateDetailResponse;
 import com.todoc.dto.response.LandInfoResponse;
 import com.todoc.exception.NotFoundException;
@@ -50,6 +51,7 @@ public class ChatService {
     private final FormTemplateRepository formTemplateRepository;
     private final AiPermitClient aiPermitClient;
     private final FormTemplateService formTemplateService;
+    private final FormSubmissionService formSubmissionService;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -85,7 +87,16 @@ public class ChatService {
                     templateDetail = formTemplateService.getDetailById(request.templateId());
                 }
 
-                aiPermitClient.createDocument(session.getId(), landInfo, templateDetail);
+                AiPermitClient.CreateDocumentResponse docResponse =
+                        aiPermitClient.createDocument(session.getId(), landInfo, templateDetail);
+                if (docResponse != null && request.templateId() != null) {
+                    List<AiPermitClient.AnswerItem> answers = docResponse.toAnswerItems();
+                    if (!answers.isEmpty()) {
+                        FormSubmission sub = formSubmissionService.submitAiGenerated(
+                                request.templateId(), request.userId(), session, answers);
+                        session.updateSubmissionId(sub.getId());
+                    }
+                }
             } catch (JsonProcessingException e) {
                 log.error("토지 정보 직렬화 실패: sessionId={}", session.getId(), e);
             } catch (Exception e) {

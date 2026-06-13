@@ -4,6 +4,7 @@ import com.todoc.dto.response.FormTemplateDetailResponse;
 import com.todoc.dto.response.LandInfoResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -21,7 +22,23 @@ public class AiPermitClient {
 
     public record CreateDocumentRequest(String thread_id, LandInfoResponse land_info, FormTemplateDetailResponse template) {}
 
-    public record CreateDocumentResponse(String document_id, String status) {}
+    public record AnswerItem(Long question_id, String answer_value) {}
+
+    public record FilledQuestion(Long id, String answer) {}
+
+    public record FilledSection(Long id, List<FilledQuestion> questions) {}
+
+    public record CreateDocumentResponse(String thread_id, String templateCode,
+            List<FilledSection> sections, int filled_count, int total_count) {
+        public List<AnswerItem> toAnswerItems() {
+            if (sections == null) return List.of();
+            return sections.stream()
+                    .flatMap(s -> s.questions().stream())
+                    .filter(q -> q.answer() != null && !q.answer().isBlank())
+                    .map(q -> new AnswerItem(q.id(), q.answer()))
+                    .toList();
+        }
+    }
 
     public PermitChatResponse chat(String message, Long sessionId) {
         try {
@@ -41,7 +58,9 @@ public class AiPermitClient {
     public CreateDocumentResponse createDocument(Long sessionId, LandInfoResponse landInfo, FormTemplateDetailResponse template) {
         try {
             return aiRestClient.post()
-                    .uri("/api/v1/documents")
+                    .uri("/api/v1/permit/document")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
                     .body(new CreateDocumentRequest(sessionId.toString(), landInfo, template))
                     .retrieve()
                     .body(CreateDocumentResponse.class);
