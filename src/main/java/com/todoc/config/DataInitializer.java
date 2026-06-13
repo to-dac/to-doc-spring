@@ -6,15 +6,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.todoc.domain.FormQuestion;
 import com.todoc.domain.FormSection;
 import com.todoc.domain.FormTemplate;
+import com.todoc.domain.User;
 import com.todoc.domain.enums.QuestionType;
 import com.todoc.repository.FormQuestionRepository;
 import com.todoc.repository.FormSectionRepository;
 import com.todoc.repository.FormTemplateRepository;
+import com.todoc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +33,22 @@ public class DataInitializer {
     private final FormTemplateRepository templateRepository;
     private final FormSectionRepository sectionRepository;
     private final FormQuestionRepository questionRepository;
+    private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void init() {
+        if (!userRepository.existsByEmail("test@test.com")) {
+            userRepository.save(User.builder()
+                    .email("test@test.com")
+                    .userName("테스트 유저")
+                    .password(passwordEncoder.encode("test1234"))
+                    .build());
+            log.info("Default test user seeded successfully.");
+        }
+
         if (templateRepository.existsByTemplateCode("building_major_repair_use_change_permit")) {
             log.info("Building permit template already seeded, skipping.");
             return;
