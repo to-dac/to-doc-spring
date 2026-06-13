@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface FormTemplateRepository extends JpaRepository<FormTemplate, Long> {
     Optional<FormTemplate> findByTemplateCode(String templateCode);
     List<FormTemplate> findAllByActiveTrue();
+    List<FormTemplate> findAllByActiveTrueAndTemplateCodeIn(List<String> templateCodes);
     boolean existsByTemplateCode(String templateCode);
 }

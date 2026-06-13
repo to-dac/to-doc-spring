@@ -17,8 +17,9 @@ public class FormTemplateController {
     private final FormTemplateService formTemplateService;
 
     @GetMapping
-    public List<FormTemplateResponse> list() {
-        return formTemplateService.listActive();
+git     public List<FormTemplateResponse> list(
+            @RequestParam(required = false) List<String> templateCodes) {
+        return formTemplateService.listActive(templateCodes);
     }
 
     @GetMapping("/{templateCode}")

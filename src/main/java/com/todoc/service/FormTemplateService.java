@@ -28,8 +28,11 @@ public class FormTemplateService {
     private final TimelineTemplateRepository timelineTemplateRepository;
     private final ChecklistItemTemplateRepository checklistItemTemplateRepository;
 
-    public List<FormTemplateResponse> listActive() {
-        return templateRepository.findAllByActiveTrue().stream()
+    public List<FormTemplateResponse> listActive(List<String> templateCodes) {
+        var templates = (templateCodes == null || templateCodes.isEmpty())
+                ? templateRepository.findAllByActiveTrue()
+                : templateRepository.findAllByActiveTrueAndTemplateCodeIn(templateCodes);
+        return templates.stream()
                 .map(FormTemplateResponse::from)
                 .toList();
     }
