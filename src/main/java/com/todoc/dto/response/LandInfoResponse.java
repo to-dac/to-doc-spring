@@ -1,6 +1,7 @@
 // 토지 정보 조회 응답 DTO
 package com.todoc.dto.response;
 
+import com.todoc.domain.FormTemplate;
 import com.todoc.dto.external.BuildingInfoResponse;
 import com.todoc.dto.external.VWorldLandResponse;
 import com.todoc.dto.external.VWorldLandUseResponse;
@@ -24,7 +25,7 @@ public record LandInfoResponse(
         String lastUpdtDt,
         Building building,
         List<LandUse> landUses,
-        List<String> applicablePermitCodes
+        List<PermitTemplate> applicablePermits
 ) {
 
     public record LandUse(
@@ -34,6 +35,21 @@ public record LandInfoResponse(
     ) {
         public static LandUse from(VWorldLandUseResponse.Field field) {
             return new LandUse(field.code(), field.name(), field.conflictType());
+        }
+    }
+
+    public record PermitTemplate(
+            Long id,
+            String templateCode,
+            String name,
+            String description
+    ) {
+        public static PermitTemplate from(FormTemplate template) {
+            return new PermitTemplate(
+                    template.getId(),
+                    template.getTemplateCode(),
+                    template.getName(),
+                    template.getDescription());
         }
     }
 
@@ -56,7 +72,7 @@ public record LandInfoResponse(
 
     public static LandInfoResponse of(String pnu, String address,
             VWorldLandResponse.Field field, BuildingInfoResponse bldg,
-            List<VWorldLandUseResponse.Field> uses, List<String> applicablePermitCodes) {
+            List<VWorldLandUseResponse.Field> uses, List<FormTemplate> applicablePermits) {
         Building building = bldg == null
                 ? new Building(false, null, null, null, null, null, null, null, null, null, null, null, null, null)
                 : new Building(true,
@@ -67,6 +83,7 @@ public record LandInfoResponse(
                         bldg.useAprDay(), bldg.strctCdNm());
 
         List<LandUse> landUses = uses.stream().map(LandUse::from).toList();
+        List<PermitTemplate> permits = applicablePermits.stream().map(PermitTemplate::from).toList();
 
         return new LandInfoResponse(
                 pnu, address,
@@ -74,6 +91,6 @@ public record LandInfoResponse(
                 field.prposArea1Nm(), field.prposArea2Nm(), field.ladUseSittnNm(),
                 field.tpgrphHgCodeNm(), field.tpgrphFrmCodeNm(), field.roadSideCodeNm(),
                 field.pblntfPclnd(), field.lastUpdtDt(),
-                building, landUses, applicablePermitCodes);
+                building, landUses, permits);
     }
 }

@@ -3,13 +3,16 @@ package com.todoc.service;
 
 import com.todoc.client.BuildingRegisterClient;
 import com.todoc.client.VWorldClient;
+import com.todoc.domain.FormTemplate;
 import com.todoc.dto.external.BuildingInfoResponse;
 import com.todoc.dto.external.VWorldLandResponse;
 import com.todoc.dto.external.VWorldLandUseResponse;
 import com.todoc.dto.external.VWorldWfsResponse;
 import com.todoc.dto.response.LandInfoResponse;
+import com.todoc.repository.FormTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +27,9 @@ public class LandService {
 
     private final VWorldClient vWorldClient;
     private final BuildingRegisterClient buildingRegisterClient;
+    private final FormTemplateRepository formTemplateRepository;
 
+    @Transactional(readOnly = true)
     public LandInfoResponse getLandInfo(double lat, double lng) {
         VWorldWfsResponse.Properties wfs = vWorldClient.getPnuByCoordinate(lat, lng);
         String pnu = wfs.pnu();
@@ -33,7 +38,8 @@ public class LandService {
         BuildingInfoResponse building = buildingRegisterClient.getBuilding(pnu);
         List<VWorldLandUseResponse.Field> landUses = vWorldClient.getLandUses(pnu);
         List<String> permitCodes = resolvePermitCodes(field, landUses);
-        return LandInfoResponse.of(pnu, address, field, building, landUses, permitCodes);
+        List<FormTemplate> permits = formTemplateRepository.findAllByActiveTrueAndTemplateCodeIn(permitCodes);
+        return LandInfoResponse.of(pnu, address, field, building, landUses, permits);
     }
 
     private List<String> resolvePermitCodes(VWorldLandResponse.Field field,
