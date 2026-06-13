@@ -35,3 +35,7 @@ springdoc:
 logging:
   level:
     com.todoc: INFO
+
+app:
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}
