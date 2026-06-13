@@ -37,6 +37,12 @@ public class FormTemplateService {
                 .toList();
     }
 
+    public FormTemplateDetailResponse getDetailById(Long templateId) {
+        var template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new NotFoundException("템플릿을 찾을 수 없습니다: id=" + templateId));
+        return getDetail(template.getTemplateCode());
+    }
+
     public FormTemplateDetailResponse getDetail(String templateCode) {
         var template = templateRepository.findByTemplateCode(templateCode)
                 .orElseThrow(() -> new NotFoundException("템플릿을 찾을 수 없습니다: " + templateCode));

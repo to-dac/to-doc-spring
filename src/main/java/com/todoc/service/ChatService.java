@@ -1,5 +1,7 @@
 package com.todoc.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.todoc.domain.ChatMessage;
 import com.todoc.domain.ChatSession;
 import com.todoc.domain.User;
@@ -9,6 +11,8 @@ import com.todoc.dto.request.CreateChatSessionRequest;
 import com.todoc.dto.request.SendChatMessageRequest;
 import com.todoc.dto.response.ChatMessageResponse;
 import com.todoc.dto.response.ChatSessionResponse;
+import com.todoc.dto.response.FormTemplateDetailResponse;
+import com.todoc.dto.response.LandInfoResponse;
 import com.todoc.exception.NotFoundException;
 import com.todoc.repository.ChatMessageRepository;
 import com.todoc.repository.ChatSessionRepository;
@@ -46,26 +50,51 @@ public class ChatService {
     private final UserRepository userRepository;
     private final FormTemplateRepository formTemplateRepository;
     private final AiPermitClient aiPermitClient;
+    private final FormTemplateService formTemplateService;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public ChatSessionResponse createSession(CreateChatSessionRequest request) {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다: id=" + request.userId()));
 
+        LandInfoResponse landInfo = request.landInfo();
+        String address = landInfo != null ? landInfo.address() : null;
+        String pnu = landInfo != null ? landInfo.pnu() : null;
+
         String title = "새 채팅";
-        if (request.address() != null && !request.address().trim().isEmpty()) {
-            title = request.address().split("\\|")[0];
+        if (address != null && !address.trim().isEmpty()) {
+            title = address.split("\\|")[0];
         }
 
         ChatSession session = ChatSession.builder()
                 .user(user)
                 .title(title)
-                .address(request.address())
-                .pnu(request.pnu())
+                .address(address)
+                .pnu(pnu)
                 .templateId(request.templateId())
                 .build();
 
-        return ChatSessionResponse.from(chatSessionRepository.save(session));
+        chatSessionRepository.save(session);
+
+        if (landInfo != null) {
+            try {
+                session.updateLandInfo(objectMapper.writeValueAsString(landInfo));
+
+                FormTemplateDetailResponse templateDetail = null;
+                if (request.templateId() != null) {
+                    templateDetail = formTemplateService.getDetailById(request.templateId());
+                }
+
+                aiPermitClient.createDocument(session.getId(), landInfo, templateDetail);
+            } catch (JsonProcessingException e) {
+                log.error("토지 정보 직렬화 실패: sessionId={}", session.getId(), e);
+            } catch (Exception e) {
+                log.error("세션 초기화 중 오류: sessionId={}", session.getId(), e);
+            }
+        }
+
+        return ChatSessionResponse.from(session);
     }
 
     @Transactional(readOnly = true)

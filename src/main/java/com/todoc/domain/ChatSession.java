@@ -36,6 +36,9 @@ public class ChatSession {
     @Column(name = "template_id")
     private Long templateId;
 
+    @Column(name = "land_info", columnDefinition = "TEXT")
+    private String landInfo;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -58,5 +61,9 @@ public class ChatSession {
 
     public void updateTemplateId(Long templateId) {
         this.templateId = templateId;
+    }
+
+    public void updateLandInfo(String landInfo) {
+        this.landInfo = landInfo;
     }
 }

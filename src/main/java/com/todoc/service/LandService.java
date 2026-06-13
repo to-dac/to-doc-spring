@@ -30,6 +30,16 @@ public class LandService {
     private final FormTemplateRepository formTemplateRepository;
 
     @Transactional(readOnly = true)
+    public LandInfoResponse getLandInfoByPnu(String pnu, String address) {
+        VWorldLandResponse.Field field = vWorldClient.getLandCharacteristics(pnu);
+        BuildingInfoResponse building = buildingRegisterClient.getBuilding(pnu);
+        List<VWorldLandUseResponse.Field> landUses = vWorldClient.getLandUses(pnu);
+        List<String> permitCodes = resolvePermitCodes(field, landUses);
+        List<FormTemplate> permits = formTemplateRepository.findAllByActiveTrueAndTemplateCodeIn(permitCodes);
+        return LandInfoResponse.of(pnu, address, field, building, landUses, permits);
+    }
+
+    @Transactional(readOnly = true)
     public LandInfoResponse getLandInfo(double lat, double lng) {
         VWorldWfsResponse.Properties wfs = vWorldClient.getPnuByCoordinate(lat, lng);
         String pnu = wfs.pnu();
