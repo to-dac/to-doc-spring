@@ -10,11 +10,13 @@ import com.todoc.dto.response.FormSubmissionResponse.AnswerResponse;
 import com.todoc.exception.NotFoundException;
 import com.todoc.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FormSubmissionService {
@@ -130,6 +132,27 @@ public class FormSubmissionService {
 
         answerRepository.saveAll(formAnswers);
         return submission;
+    }
+
+    @Transactional
+    public void applyChanges(Long submissionId, List<AiPermitClient.ChangeItem> changes) {
+        for (AiPermitClient.ChangeItem change : changes) {
+            answerRepository.findBySubmissionIdAndQuestionId(submissionId, change.questionId())
+                    .ifPresent(answer -> {
+                        String newValue = toJsonValue(change.current());
+                        answer.updateAnswerValue(newValue);
+                        answerRepository.save(answer);
+                        log.info("답변 업데이트: questionId={}, {} → {}", change.questionId(), change.previous(), change.current());
+                    });
+        }
+    }
+
+    private String toJsonValue(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number || value instanceof Boolean) return value.toString();
+        String str = value.toString().trim();
+        if (str.startsWith("{") || str.startsWith("[") || str.startsWith("\"")) return str;
+        return "\"" + str.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
     @Transactional(readOnly = true)

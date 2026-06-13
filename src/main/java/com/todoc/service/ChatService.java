@@ -152,6 +152,10 @@ public class ChatService {
             }
         }
 
+        if (aiResponse.changes() != null && !aiResponse.changes().isEmpty() && session.getSubmissionId() != null) {
+            formSubmissionService.applyChanges(session.getSubmissionId(), aiResponse.changes());
+        }
+
         ChatMessage assistantMessage = ChatMessage.builder()
                 .session(session)
                 .role(MessageRole.ASSISTANT)
@@ -205,10 +209,27 @@ public class ChatService {
                     }
                 }
 
+                boolean changesApplied = false;
+                if (aiResponse.changes() != null && !aiResponse.changes().isEmpty()) {
+                    changesApplied = chatSessionRepository.findById(sessionId)
+                            .map(s -> {
+                                if (s.getSubmissionId() != null) {
+                                    formSubmissionService.applyChanges(s.getSubmissionId(), aiResponse.changes());
+                                    return true;
+                                }
+                                return false;
+                            }).orElse(false);
+                }
+
                 String[] chunks = fullResponse.split("(?<=\\n)|(?<=\\.\\s)");
                 for (String chunk : chunks) {
                     emitter.send(SseEmitter.event().name("chunk").data(chunk));
                     Thread.sleep(80);
+                }
+
+                if (changesApplied) {
+                    emitter.send(SseEmitter.event().name("changes")
+                            .data(objectMapper.writeValueAsString(aiResponse.changes())));
                 }
 
                 saveMessage(session, MessageRole.ASSISTANT, fullResponse);

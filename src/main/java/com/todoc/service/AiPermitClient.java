@@ -25,7 +25,16 @@ public class AiPermitClient {
             @JsonProperty("land_context") Object landContext
     ) {}
 
-    public record PermitChatResponse(String thread_id, String reply, String permit_type) {}
+    public record ChangeItem(
+            Long questionId,
+            String layoutKey,
+            String name,
+            Object previous,
+            Object current,
+            String source
+    ) {}
+
+    public record PermitChatResponse(String thread_id, String reply, String permit_type, List<ChangeItem> changes) {}
 
     public record CreateDocumentRequest(String thread_id, LandInfoResponse land_info, FormTemplateDetailResponse template) {}
 
@@ -57,16 +66,19 @@ public class AiPermitClient {
 
     public PermitChatResponse chat(String message, Long sessionId, Object landContext) {
         try {
-            return aiRestClient.post()
+            log.info("[AI 요청] sessionId={}, message={}, hasLandContext={}", sessionId, message, landContext != null);
+            PermitChatResponse response = aiRestClient.post()
                     .uri("/api/v1/permit/chat")
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
                     .body(new PermitChatRequest(message, sessionId.toString(), landContext))
                     .retrieve()
                     .body(PermitChatResponse.class);
+            log.info("[AI 응답] sessionId={}, response={}", sessionId, response);
+            return response;
         } catch (Exception e) {
             log.error("AI 백엔드 호출 실패: sessionId={}, error={}", sessionId, e.getMessage(), e);
-            return new PermitChatResponse(sessionId.toString(), "AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.", null);
+            return new PermitChatResponse(sessionId.toString(), "AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.", null, null);
         }
     }
 
