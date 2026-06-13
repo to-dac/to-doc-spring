@@ -35,8 +35,16 @@ public class AiPermitClient {
             return sections.stream()
                     .flatMap(s -> s.questions().stream())
                     .filter(q -> q.answer() != null && !q.answer().isBlank())
-                    .map(q -> new AnswerItem(q.id(), q.answer()))
+                    .map(q -> new AnswerItem(q.id(), toJsonValue(q.answer())))
                     .toList();
+        }
+
+        private static String toJsonValue(String value) {
+            String trimmed = value.trim();
+            if (trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.startsWith("\"")) {
+                return trimmed;
+            }
+            return "\"" + trimmed.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
         }
     }
 
