@@ -10,6 +10,7 @@ public record ChatSessionResponse(
         String address,
         String pnu,
         Long templateId,
+        Long submissionId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -21,6 +22,7 @@ public record ChatSessionResponse(
                 session.getAddress(),
                 session.getPnu(),
                 session.getTemplateId(),
+                session.getSubmissionId(),
                 session.getCreatedAt(),
                 session.getUpdatedAt()
         );

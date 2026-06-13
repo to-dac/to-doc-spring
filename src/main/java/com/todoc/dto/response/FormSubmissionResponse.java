@@ -9,6 +9,7 @@ import java.util.List;
 public record FormSubmissionResponse(
         Long id,
         Long templateId,
+        String templateCode,
         String templateName,
         Long userId,
         String status,
@@ -20,6 +21,7 @@ public record FormSubmissionResponse(
         return new FormSubmissionResponse(
                 s.getId(),
                 s.getTemplate().getId(),
+                s.getTemplate().getTemplateCode(),
                 s.getTemplate().getName(),
                 s.getUser().getId(),
                 s.getStatus().name(),
