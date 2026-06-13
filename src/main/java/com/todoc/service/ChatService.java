@@ -115,9 +115,10 @@ public class ChatService {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new NotFoundException("세션을 찾을 수 없습니다: id=" + sessionId));
 
+        Object landContext = resolveLandContext(sessionId, session);
         saveMessage(session, MessageRole.USER, request.content());
 
-        AiPermitClient.PermitChatResponse aiResponse = aiPermitClient.chat(request.content(), sessionId);
+        AiPermitClient.PermitChatResponse aiResponse = aiPermitClient.chat(request.content(), sessionId, landContext);
 
         if (aiResponse.permit_type() != null) {
             String templateCode = PERMIT_TYPE_TO_TEMPLATE_CODE.get(aiResponse.permit_type());
@@ -149,6 +150,7 @@ public class ChatService {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new NotFoundException("세션을 찾을 수 없습니다: id=" + sessionId));
 
+        Object landContext = resolveLandContext(sessionId, session);
         saveMessage(session, MessageRole.USER, request.content());
 
         SseEmitter emitter = new SseEmitter(180000L);
@@ -164,7 +166,7 @@ public class ChatService {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                AiPermitClient.PermitChatResponse aiResponse = aiPermitClient.chat(request.content(), sessionId);
+                AiPermitClient.PermitChatResponse aiResponse = aiPermitClient.chat(request.content(), sessionId, landContext);
                 String fullResponse = aiResponse.reply();
 
                 if (aiResponse.permit_type() != null) {
@@ -201,6 +203,19 @@ public class ChatService {
         emitter.onError(e -> executor.shutdown());
 
         return emitter;
+    }
+
+    private Object resolveLandContext(Long sessionId, ChatSession session) {
+        boolean isFirstUserMessage = chatMessageRepository.countBySessionIdAndRole(sessionId, MessageRole.USER) == 0;
+        if (!isFirstUserMessage || session.getLandInfo() == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(session.getLandInfo(), Object.class);
+        } catch (Exception e) {
+            log.warn("land_info 파싱 실패: sessionId={}", sessionId);
+            return null;
+        }
     }
 
     @Transactional

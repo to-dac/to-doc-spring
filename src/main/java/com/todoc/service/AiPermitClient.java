@@ -1,5 +1,7 @@
 package com.todoc.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.todoc.dto.response.FormTemplateDetailResponse;
 import com.todoc.dto.response.LandInfoResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,12 @@ public class AiPermitClient {
 
     private final RestClient aiRestClient;
 
-    public record PermitChatRequest(String message, String thread_id) {}
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record PermitChatRequest(
+            String message,
+            String thread_id,
+            @JsonProperty("land_context") Object landContext
+    ) {}
 
     public record PermitChatResponse(String thread_id, String reply, String permit_type) {}
 
@@ -23,13 +30,13 @@ public class AiPermitClient {
 
     public record CreateDocumentResponse(String document_id, String status) {}
 
-    public PermitChatResponse chat(String message, Long sessionId) {
+    public PermitChatResponse chat(String message, Long sessionId, Object landContext) {
         try {
             return aiRestClient.post()
                     .uri("/api/v1/permit/chat")
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(new PermitChatRequest(message, sessionId.toString()))
+                    .body(new PermitChatRequest(message, sessionId.toString(), landContext))
                     .retrieve()
                     .body(PermitChatResponse.class);
         } catch (Exception e) {
