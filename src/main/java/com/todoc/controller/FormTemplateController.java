@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/form-templates")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class FormTemplateController {
 
     private final FormTemplateService formTemplateService;

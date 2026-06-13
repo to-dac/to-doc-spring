@@ -10,7 +10,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 @RequestMapping("/api/v1/permit")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PermitChatController {
 
     private final ChatService chatService;

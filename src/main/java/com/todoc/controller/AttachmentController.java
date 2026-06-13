@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/attachments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AttachmentController {
 
     private final AttachmentService attachmentService;

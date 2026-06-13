@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/land")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class LandController {
 
     private final LandService landService;

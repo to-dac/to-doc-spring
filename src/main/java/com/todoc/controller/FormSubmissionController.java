@@ -12,7 +12,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/form-submissions")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class FormSubmissionController {
 
     private final FormSubmissionService formSubmissionService;
