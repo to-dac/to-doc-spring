@@ -39,8 +39,14 @@ public class ChatService {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다: id=" + request.userId()));
 
+        String title = "새 채팅";
+        if (request.address() != null && !request.address().trim().isEmpty()) {
+            title = request.address().split("\\|")[0];
+        }
+
         ChatSession session = ChatSession.builder()
                 .user(user)
+                .title(title)
                 .address(request.address())
                 .build();
 
