@@ -11,6 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/permissions")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class PermissionController {
 
     private final PermissionService permissionService;
